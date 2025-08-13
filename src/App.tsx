@@ -2,13 +2,18 @@ import React, { useState } from 'react'
 import LoginForm from './components/LoginForm'
 import SignupForm from './components/SignupForm'
 import Dashboard from './components/Dashboard'
+import ProfilePage from './components/ProfilePage'
+import OrganizationSetup from './components/OrganizationSetup'
 import { useAuth } from './hooks/useAuth'
+import { useOrganization } from './hooks/useOrganization'
 
 function App() {
   const [isLogin, setIsLogin] = useState(true)
-  const { user, loading } = useAuth()
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'profile'>('dashboard')
+  const { user, loading: authLoading } = useAuth()
+  const { hasOrganization, loading: orgLoading } = useOrganization()
 
-  if (loading) {
+  if (authLoading || (user && orgLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
         <div className="backdrop-blur-xl bg-white/10 rounded-3xl border border-white/20 shadow-2xl p-8">
@@ -21,10 +26,20 @@ function App() {
     )
   }
 
-  if (user) {
+  // Show organization setup if user is authenticated but has no organization
+  if (user && !hasOrganization) {
+    return <OrganizationSetup onComplete={() => window.location.reload()} />
+  }
+
+  // Show dashboard or profile if user is authenticated and has organization
+  if (user && hasOrganization) {
+    if (currentPage === 'profile') {
+      return <ProfilePage onBack={() => setCurrentPage('dashboard')} />
+    }
     return <Dashboard />
   }
 
+  // Show auth forms if user is not authenticated
   return (
     <div className="min-h-screen relative overflow-hidden font-inter">
       {/* Animated Background with Green Accents */}
